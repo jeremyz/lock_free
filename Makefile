@@ -16,7 +16,9 @@ cas_test: cas_test.o
 lock_free_queue_test: lock_free_queue.o lock_free_queue_test.o
 	$(CC) lock_free_queue.o lock_free_queue_test.o -o lock_free_queue_test
 
-lfq_test: lfq_cas.h lfq.o lfq_test.o
+lfq.o: lfq.h lfq_cas.h
+
+lfq_test: lfq.o lfq_test.o
 	$(CC) lfq.o lfq_test.o -o lfq_test
 
 as:

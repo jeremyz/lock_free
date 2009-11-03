@@ -32,13 +32,6 @@
 #include "lfq.h"
 #include "lfq_cas.h"
 
-/**
- * container_of - cast a member of a structure out to the containing structure
- * @ptr:	the pointer to the member.
- * @type:	the type of the container struct this is embedded in.
- * @member:	the name of the member within the struct.
- *
- */
 #define container_of(ptr, type, member) ({			\
 	const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
 	(type *)( (char *)__mptr - offsetof(type,member) );})
@@ -79,8 +72,8 @@ int main(int argc, char *argv[]) {
    
     /* check lfq */
     lfq_init( &q);
-    printf("shift %X\n",(unsigned int)shift( &q ));
-    for(i=0; i<10; i++) lfq_push( &q, &data[i].link );
+    printf("pop %X\n",(unsigned int)pop_head( &q ));
+    for(i=0; i<10; i++) lfq_push_tail( &q, &data[i].link );
 
     it = (pointer_t*)q.head.split.next;
     while(it!=NULL) {
@@ -89,8 +82,8 @@ int main(int argc, char *argv[]) {
     }
     
     for(i=0; i<5; i++) {
-        it = shift( &q );
-        printf("shift %X %d\n",(unsigned int)it,container_of(it,struct node,link)->data);
+        it = pop_head( &q );
+        printf("pop %X %d\n",(unsigned int)it,container_of(it,struct node,link)->data);
     }
     it = (pointer_t*)q.head.split.next;
     while(it!=NULL) {

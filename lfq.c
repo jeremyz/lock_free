@@ -36,7 +36,7 @@ void lfq_init( lfq_t *q ) {
 }
 
 /* push a node at the tail of q */
-void lfq_push( lfq_t *q, pointer_t *node ) {
+void lfq_push_tail( lfq_t *q, pointer_t *node ) {
     pointer_t tail;
     pointer_t last;
     pointer_t tmp;
@@ -79,8 +79,8 @@ void lfq_push( lfq_t *q, pointer_t *node ) {
     cas( &q->tail.split, tail.split, tmp.split );
 }
 
-/* shift a node from the head of q */
-pointer_t* shift( lfq_t *q ) {
+/* pop a node from the head of q */
+pointer_t* pop_head( lfq_t *q ) {
     pointer_t head;
     pointer_t tail;
     pointer_t tmp;
