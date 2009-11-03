@@ -3,7 +3,7 @@
 CC     = gcc
 STD    = _GNU_SOURCE
 CFLAGS = -DDEBUG
-BIN    = cas_test lock_free_queue_test
+BIN    = cas_test lock_free_queue_test lfq_test
 
 .c.o:
 	$(CC) -c -Wall -I. $(CFLAGS) -D$(STD) $<
@@ -16,6 +16,11 @@ cas_test: cas_test.o
 lock_free_queue_test: lock_free_queue.o lock_free_queue_test.o
 	$(CC) lock_free_queue.o lock_free_queue_test.o -o lock_free_queue_test
 
-clean:
-	rm -f *~ *.o core $(BIN)
+lfq_test: lfq_cas.h lfq.o lfq_test.o
+	$(CC) lfq.o lfq_test.o -o lfq_test
 
+as:
+	$(CC) -S lfq.c
+
+clean:
+	rm -f *~ *.o *.s core $(BIN)
