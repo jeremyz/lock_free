@@ -6,11 +6,23 @@
  */
 
 #include "stdlib.h"
-#include "cas.h"
 #include "lock_free_queue.h"
 #ifdef DEBUG
 #include "stdio.h"
 #endif
+
+/* CMPXCHG8B m64   Compare EDX:EAX with m64. If equal, set ZF and load ECX:EBX into m64. Else, clear ZF and load m64 into EDX:EAX. */
+static inline unsigned int compare_and_swap(volatile unsigned long long *mem,
+                                            volatile unsigned long long old,
+                                            volatile unsigned long long new) {
+    char result;
+    __asm__ __volatile__("lock; cmpxchg8b %0; setz %1;"
+            : "=m"(*mem), "=q"(result)
+            : "m"(*mem), "d" ((unsigned long)(old>>32)), "a" ((unsigned long)old),
+            "c" ((unsigned long)(new>>32)), "b" ((unsigned long)new)
+            : "memory");
+    return (int)result;
+}
 
 void init( lfq_t *q ) {
     node_t *node = (node_t*)malloc(sizeof(node_t));

@@ -1,5 +1,5 @@
 /*
- * File     : atomic.c
+ * File     : lfq_test.c
  * Author   : Jérémy Zurcher  <jeremy@asynk.ch>
  * Date     : 01/11/09 
  * License  :
@@ -25,38 +25,44 @@
  *
  */
 
-#include <stdio.h>
-#include "cas.h"
+#include "stdio.h"
+#include "stdlib.h"
+#include "stddef.h"
 
-#define MAKE_LONG_LONG(lo, hi)		((hi)<<32)+(lo)
+#define container_of(ptr, type, member) ({			\
+	const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
+	(type *)( (char *)__mptr - offsetof(type,member) );})
 
-typedef union pointer {
-    struct {
-        volatile void *ptr;
-        volatile unsigned int count;
-    } split;
-    volatile unsigned long long concat;
-} pointer_t;
+struct node {
+    int data;
+    int daat2;
+    int daat3;
+    int daat4;
+    int daaat4;
+};
+#define OFFSET offsetof(struct node,daat3)
+#define my_offset(ptr, type, member) ( { (type*)(((char*)ptr)-offsetof(type,member)); } )
 
-int main( int argc, char*argv[], char*env[] ) {
-    int ret;
+struct node n;
 
-    pointer_t mem, old, new;
-    
-    mem.split.count = 0;
-    old.split.count = 6;
-    new.split.count = 666;
-    mem.split.ptr = (void*)&argc;
-    old.split.ptr = (void*)&argc;
-    new.split.ptr = (void*)&argv;
-
-    ret = compare_and_swap(&mem.concat, old.concat, new.concat);
-    printf("ret %d -> (%d,%X)\n", ret, mem.split.count, (unsigned int)mem.split.ptr);
-
-    mem.split.count=6;
-    ret = compare_and_swap(&mem.concat, old.concat, new.concat);
-    printf("ret %d -> (%d,%X)\n", ret, mem.split.count, (unsigned int)mem.split.ptr);
-
-    return 0;
+struct node* use_container_of() {
+    return container_of( &n.daat3, struct node, daat3);
 }
 
+struct node* use_mine() {
+    return my_offset( &n.daat3, struct node, daat3);
+/*    return (struct node*)(((char*)&n.daat3)-OFFSET); */
+}
+
+struct node* use_struct(){
+    return &n;
+}
+
+int main(int argc, char *argv[]) {
+
+    printf ("%X\n", (int)use_container_of());
+    printf ("%X\n", (int)use_mine());
+    printf ("%X\n", (int)use_struct());
+
+    return EXIT_SUCCESS;
+}
