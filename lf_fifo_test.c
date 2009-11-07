@@ -1,5 +1,5 @@
 /*
- * File     : lfq_test.c
+ * File     : lf_fifo_test.c
  * Author   : Jérémy Zurcher  <jeremy@asynk.ch>
  * Date     : 01/11/09 
  * License  :
@@ -29,8 +29,8 @@
 #include "stdlib.h"
 #include "stddef.h"
 
-#include "lfq.h"
-#include "lfq_cas.h"
+#include "lf_fifo.h"
+#include "lf_fifo_cas.h"
 
 #define container_of(ptr, type, member) ({			\
 	const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
     pointer_t mem;
     int ret;
 
-    lfq_t q;
+    lf_fifo_t q;
     pointer_t *it;
     struct node data[10];
     int i;
@@ -70,10 +70,10 @@ int main(int argc, char *argv[]) {
     for(i=0; i<10; i++) data[i].data=i;
     for(i=0; i<10; i++) printf("data[%d] :%d\n",i,data[i].data);
    
-    /* check lfq */
-    lfq_init( &q);
+    /* check lf_fifo */
+    lf_fifo_init( &q);
     printf("pop %X\n",(unsigned int)pop_head( &q ));
-    for(i=0; i<10; i++) lfq_push_tail( &q, &data[i].link );
+    for(i=0; i<10; i++) lf_fifo_push_tail( &q, &data[i].link );
 
     it = (pointer_t*)q.head.split.next;
     while(it!=NULL) {

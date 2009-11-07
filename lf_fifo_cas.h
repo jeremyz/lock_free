@@ -1,5 +1,5 @@
 /*
- * File     : lfq_cas.h
+ * File     : lf_fifo_cas.h
  * Author   : Jérémy Zurcher  <jeremy@asynk.ch>
  * Date     : 01/11/09 
  * License  :
@@ -25,7 +25,7 @@
  *
  */
 
-#include "lfq.h"
+#include "lf_fifo.h"
 
 /* CMPXCHG8B m64   Compare EDX:EAX with m64. If equal, set ZF and load ECX:EBX into m64. Else, clear ZF and load m64 into EDX:EAX. */
 static inline unsigned int cas( volatile struct split *mem,

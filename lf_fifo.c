@@ -25,18 +25,18 @@
  *
  */
 
-#include "lfq.h"
-#include "lfq_cas.h"
+#include "lf_fifo.h"
+#include "lf_fifo_cas.h"
 #include "stdlib.h"
 
-/* initialize an empty lfq structure */
-void lfq_init( lfq_t *q ) {
+/* initialize an empty lf_fifo structure */
+void lf_fifo_init( lf_fifo_t *q ) {
     q->head.split.next = q->tail.split.next = NULL;
     q->head.split.count = q->tail.split.count = 0;
 }
 
 /* push a node at the tail of q */
-void lfq_push_tail( lfq_t *q, pointer_t *node ) {
+void lf_fifo_push_tail( lf_fifo_t *q, pointer_t *node ) {
     pointer_t tail;
     pointer_t last;
     pointer_t tmp;
@@ -80,7 +80,7 @@ void lfq_push_tail( lfq_t *q, pointer_t *node ) {
 }
 
 /* pop a node from the head of q */
-pointer_t* pop_head( lfq_t *q ) {
+pointer_t* pop_head( lf_fifo_t *q ) {
     pointer_t head;
     pointer_t tail;
     pointer_t tmp;
