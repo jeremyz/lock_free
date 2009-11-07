@@ -34,23 +34,23 @@
 	(type *)( (char *)__mptr - offsetof(type,member) );})
 
 struct node {
-    int data;
-    int daat2;
-    int daat3;
-    int daat4;
-    int daaat4;
+    int data1;
+    int data2;
+    int data3;
+    int data4;
+    int data5;
 };
-#define OFFSET offsetof(struct node,daat3)
+
 #define my_offset(ptr, type, member) ( { (type*)(((char*)ptr)-offsetof(type,member)); } )
 
 struct node n;
 
 struct node* use_container_of() {
-    return container_of( &n.daat3, struct node, daat3);
+    return container_of( &n.data3, struct node, data3);
 }
 
 struct node* use_mine() {
-    return my_offset( &n.daat3, struct node, daat3);
+    return my_offset( &n.data3, struct node, data3);
 /*    return (struct node*)(((char*)&n.daat3)-OFFSET); */
 }
 
