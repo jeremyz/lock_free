@@ -72,8 +72,8 @@ int main(int argc, char *argv[]) {
    
     /* check lf_fifo */
     lf_fifo_init( &q);
-    printf("pop %X\n",(unsigned int)pop_head( &q ));
-    for(i=0; i<10; i++) lf_fifo_push_tail( &q, &data[i].link );
+    printf("pop %X\n",(unsigned int)pop( &q ));
+    for(i=0; i<10; i++) lf_fifo_push( &q, &data[i].link );
 
     it = (pointer_t*)q.head.split.next;
     while(it!=NULL) {
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     }
     
     for(i=0; i<5; i++) {
-        it = pop_head( &q );
+        it = pop( &q );
         printf("pop %X %d\n",(unsigned int)it,container_of(it,struct node,link)->data);
     }
     it = (pointer_t*)q.head.split.next;
