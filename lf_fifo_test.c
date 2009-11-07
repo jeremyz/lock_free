@@ -30,41 +30,38 @@
 #include "stddef.h"
 
 #include "lf_fifo.h"
-#include "lf_fifo_cas.h"
 
-#define container_of(ptr, type, member) ({			\
-	const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
-	(type *)( (char *)__mptr - offsetof(type,member) );})
+#define container_of(ptr, type, member) ( { (type*)(((char*)ptr)-offsetof(type,member)); } )
 
 struct node {
     int data;
-    pointer_t link;
+    lf_pointer_t link;
 };
 
 int main(int argc, char *argv[]) {
-    pointer_t new;
-    pointer_t old;
-    pointer_t mem;
+    lf_pointer_t new;
+    lf_pointer_t old;
+    lf_pointer_t mem;
     int ret;
 
     lf_fifo_t q;
-    pointer_t *it;
+    lf_pointer_t *it;
     struct node data[10];
     int i;
 
     /* check comprae_and_swap */
-    mem.split.count = 0;
-    old.split.count = 6;
-    new.split.count = 666;
-    mem.split.next = (void*)&argc;
-    old.split.next = (void*)&argc;
-    new.split.next = (void*)&argv;
-    ret = cas(&mem.split, old.split, new.split);
-    printf("ret %d -> (%d,%X)\n", ret, mem.split.count, (unsigned int)mem.split.next);
+    mem.count = 0;
+    old.count = 6;
+    new.count = 666;
+    mem.ptr = (void*)&argc;
+    old.ptr = (void*)&argc;
+    new.ptr = (void*)&argv;
+    ret = cas(&mem, old, new);
+    printf("ret %d -> (%d,%X)\n", ret, mem.count, (unsigned int)mem.ptr);
 
-    mem.split.count=6;
-    ret = cas(&mem.split, old.split, new.split);
-    printf("ret %d -> (%d,%X)\n", ret, mem.split.count, (unsigned int)mem.split.next);
+    mem.count=6;
+    ret = cas(&mem, old, new);
+    printf("ret %d -> (%d,%X)\n", ret, mem.count, (unsigned int)mem.ptr);
 
     /* init data */
     for(i=0; i<10; i++) data[i].data=i;
@@ -75,20 +72,20 @@ int main(int argc, char *argv[]) {
     printf("pop %X\n",(unsigned int)pop( &q ));
     for(i=0; i<10; i++) lf_fifo_push( &q, &data[i].link );
 
-    it = (pointer_t*)q.head.split.next;
+    it = (lf_pointer_t*)q.head.ptr;
     while(it!=NULL) {
         printf("data : %d\n",container_of(it,struct node,link)->data);
-        it = (pointer_t*)it->split.next;
+        it = (lf_pointer_t*)it->ptr;
     }
     
     for(i=0; i<5; i++) {
         it = pop( &q );
         printf("pop %X %d\n",(unsigned int)it,container_of(it,struct node,link)->data);
     }
-    it = (pointer_t*)q.head.split.next;
+    it = (lf_pointer_t*)q.head.ptr;
     while(it!=NULL) {
         printf("data : %d\n",container_of(it,struct node,link)->data);
-        it = (pointer_t*)it->split.next;
+        it = (lf_pointer_t*)it->ptr;
     }
 
     return EXIT_SUCCESS;

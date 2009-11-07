@@ -1,5 +1,5 @@
 /*
- * File     : lf_fifo_cas.h
+ * File     : lf_cas.h
  * Author   : Jérémy Zurcher  <jeremy@asynk.ch>
  * Date     : 01/11/09 
  * License  :
@@ -25,18 +25,37 @@
  *
  */
 
-#include "lf_fifo.h"
+#ifndef _LF_CAS_H_
+#define _LF_CAS_H_
+
+# ifdef __cplusplus
+extern "C" {
+# endif /* __cplusplus */
+
+struct lf_pointer;
+
+typedef struct lf_pointer {
+    volatile struct lf_pointer *ptr;
+    volatile unsigned int count;
+} lf_pointer_t;
+
 
 /* CMPXCHG8B m64   Compare EDX:EAX with m64. If equal, set ZF and load ECX:EBX into m64. Else, clear ZF and load m64 into EDX:EAX. */
-static inline unsigned int cas( volatile struct split *mem,
-                                volatile struct split old,
-                                volatile struct split new ) {
+static inline unsigned int cas( volatile lf_pointer_t *mem,
+                                volatile lf_pointer_t old,
+                                volatile lf_pointer_t new ) {
     char result;
     __asm__ __volatile__("lock; cmpxchg8b %0; setz %1;"
             : "=m"(*mem), "=q"(result)
-            : "m"(*mem), "d" (old.count), "a" (old.next),
-            "c" (new.count), "b" (new.next)
+            : "m"(*mem), "d" (old.count), "a" (old.ptr),
+            "c" (new.count), "b" (new.ptr)
             : "memory");
     return (int)result;
 }
+
+# ifdef __cplusplus
+}
+# endif /* __cplusplus */
+
+# endif /* _LF_CAS_H_ */
 

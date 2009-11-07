@@ -26,86 +26,90 @@
  */
 
 #include "lf_fifo.h"
-#include "lf_fifo_cas.h"
 #include "stdlib.h"
+
+union ptr_u {
+    lf_pointer_t ptr;
+    volatile long long concat;
+};
 
 /* initialize an empty lf_fifo structure */
 void lf_fifo_init( lf_fifo_t *q ) {
-    q->head.split.next = q->tail.split.next = NULL;
-    q->head.split.count = q->tail.split.count = 0;
+    q->head.ptr = q->tail.ptr = NULL;
+    q->head.count = q->tail.count = 0;
 }
 
 /* push a node at the tail of q */
-void lf_fifo_push( lf_fifo_t *q, pointer_t *node ) {
-    pointer_t tail;
-    pointer_t last;
-    pointer_t tmp;
+void lf_fifo_push( lf_fifo_t *q, lf_pointer_t *node ) {
+    lf_pointer_t tail;
+    lf_pointer_t last;
+    lf_pointer_t tmp;
 
     /* init node */
-    node->split.next = NULL;
-    node->split.count = 0;
+    node->ptr = NULL;
+    node->count = 0;
 
     /* set tmp to point to node */
-    tmp.split.next = node;
-    tmp.split.count = 1;
+    tmp.ptr = node;
+    tmp.count = 1;
 
     for(;;) {
         /* snapshot tail */
-        tail.concat = q->tail.concat;
+        tail = q->tail;
         /* nothing in tail link as first node */
-        if ( tail.split.next==NULL && cas( &q->tail.split, tail.split, tmp.split ) ) {                  /* TODO right place ?? */
-            q->head.split.next = node;
-            /* q->head.split.count = 1; ??? */
+        if ( tail.ptr==NULL && cas( &q->tail, tail, tmp ) ) {       /* TODO right place ?? */
+            q->head.ptr = node;
+            /* q->head.count = 1; ??? */
             return;
         } else {
             /* snapshot last through tail */
-            last.concat = (*tail.split.next).concat;
+            last = *tail.ptr;
             /* if tail is still consistant */
-            if (tail.concat == q->tail.concat) {
+            if (((union ptr_u)tail).concat == ((union ptr_u)q->tail).concat) {
                 /* if last is the last node */
-                if (last.split.next == NULL) {
-                    tmp.split.count = last.split.count+1;
-                    if ( cas( &tail.split.next->split, last.split, tmp.split ) ) break;
+                if (last.ptr == NULL) {
+                    tmp.count = last.count+1;
+                    if ( cas( tail.ptr, last, tmp ) ) break;
                 } else {
                     /* try to swing tail to the next node */
-                    last.split.count = tail.split.count+1;
-                    cas( &q->tail.split, tail.split, last.split );
+                    last.count = tail.count+1;
+                    cas( &q->tail, tail, last );
                 }
             }
         }
     }
     /* try to swing tail to the next node */
-    tmp.split.count = tail.split.count+1;
-    cas( &q->tail.split, tail.split, tmp.split );
+    tmp.count = tail.count+1;
+    cas( &q->tail, tail, tmp );
 }
 
 /* pop a node from the head of q */
-pointer_t* pop( lf_fifo_t *q ) {
-    pointer_t head;
-    pointer_t tail;
-    pointer_t tmp;
-    pointer_t *node;
+lf_pointer_t* pop( lf_fifo_t *q ) {
+    lf_pointer_t head;
+    lf_pointer_t tail;
+    lf_pointer_t tmp;
+    lf_pointer_t *node;
 
     for(;;) {
         /* snapshot head */
-        head.concat = q->head.concat;
+        head = q->head;
         /* return NULL if queue is empty */
-        if (head.split.next == NULL) { return NULL; }                                                   /* TODO before snapshot using q-> ?? */
+        if (head.ptr == NULL) { return NULL; }                      /* TODO before snapshot using q-> ?? */
         /* snapshot tail */
-        tail.concat = q->tail.concat;
+        tail = q->tail;
         /* if there is only one node in the queue */
-        if ( tail.split.next == head.split.next ) {
+        if ( tail.ptr == head.ptr ) {
             /* tail points to NULL */
-            tmp.split.next = NULL;
-            tmp.split.count = tail.split.count+1;
-            cas( &q->tail.split, tail.split, tmp.split );
+            tmp.ptr = NULL;
+            tmp.count = tail.count+1;
+            cas( &q->tail, tail, tmp );
         } else {
             /* get the node ptr */
-            node = (pointer_t *)head.split.next;
+            node = (lf_pointer_t *)head.ptr;
             /* get the next head ready */
-            tmp.split.next = node->split.next;
-            tmp.split.count = head.split.count+1;
-            if ( cas( &q->head.split, head.split, tmp.split ) ) break;
+            tmp.ptr = node->ptr;
+            tmp.count = head.count+1;
+            if ( cas( &q->head, head, tmp ) ) break;
         }
     }
     return node;

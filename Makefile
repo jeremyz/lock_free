@@ -3,7 +3,7 @@
 CC     = gcc
 STD    = _GNU_SOURCE
 CFLAGS = -DDEBUG
-BIN    = cas container_of lock_free_queue_test lf_fifo
+BIN    = cas container_of lock_free_queue_test lf_fifo_test
 
 .c.o:
 	$(CC) -c -Wall -I. $(CFLAGS) -D$(STD) $<
@@ -20,8 +20,6 @@ container_of: container_of.o
 
 lock_free_queue_test: lock_free_queue.o lock_free_queue_test.o
 	$(CC) lock_free_queue.o lock_free_queue_test.o -o lock_free_queue_test
-
-
 
 lf_fifo.o: lf_fifo.h lf_cas.h
 
