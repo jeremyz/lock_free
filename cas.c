@@ -75,6 +75,16 @@ int test_cas () {
     return cas(&mem.split, old.split, new.split);
 }
 
+void check_assign_a() {
+    pointer_t a, b;
+    a.concat = b.concat;
+}
+
+void check_assign_b() {
+    pointer_t a, b;
+    a=b;
+}
+
 int main( int argc, char*argv[], char*env[] ) {
     int ret;
 
