@@ -28,11 +28,6 @@
 #include "lf_fifo.h"
 #include "stdlib.h"
 
-union ptr_u {
-    lf_pointer_t ptr;
-    volatile long long concat;
-};
-
 /* initialize an empty lf_fifo structure */
 void lf_fifo_init( lf_fifo_t *q ) {
     q->head.ptr = q->tail.ptr = NULL;
@@ -65,7 +60,7 @@ void lf_fifo_push( lf_fifo_t *q, lf_pointer_t *node ) {
             /* snapshot last through tail */
             last = *tail.ptr;
             /* if tail is still consistant */
-            if (((union ptr_u)tail).concat == ((union ptr_u)q->tail).concat) {
+            if lf_eql(tail,q->tail) {
                 /* if last is the last node */
                 if (last.ptr == NULL) {
                     tmp.count = last.count+1;
@@ -105,7 +100,7 @@ lf_pointer_t* pop( lf_fifo_t *q ) {
             cas( &q->tail, tail, tmp );
         } else {
             /* get the node ptr */
-            node = (lf_pointer_t *)head.ptr;
+            node = (lf_pointer_t*)head.ptr;
             /* get the next head ready */
             tmp.ptr = node->ptr;
             tmp.count = head.count+1;

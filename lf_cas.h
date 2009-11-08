@@ -39,6 +39,12 @@ typedef struct lf_pointer {
     volatile unsigned int count;
 } lf_pointer_t;
 
+union ptr_u {
+    lf_pointer_t ptr;
+    volatile long long concat;
+};
+
+#define lf_eql(ptra,ptrb) (((union ptr_u)(ptra)).concat == ((union ptr_u)(ptrb)).concat)
 
 /* CMPXCHG8B m64   Compare EDX:EAX with m64. If equal, set ZF and load ECX:EBX into m64. Else, clear ZF and load m64 into EDX:EAX. */
 static inline unsigned int cas( volatile lf_pointer_t *mem,
