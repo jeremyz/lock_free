@@ -1,2 +1,7 @@
 *.o
 *.s
+cas
+container_of
+lf_fifo_test
+lock_free_queue_test
+lock_free_ring_buffer_test
