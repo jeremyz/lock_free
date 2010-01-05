@@ -3,7 +3,7 @@
 CC     = gcc
 STD    = _GNU_SOURCE
 CFLAGS = -DDEBUG
-BIN    = cas container_of lock_free_queue_test lf_fifo_test
+BIN    = cas container_of lock_free_queue_test lf_fifo_test lf_ring_buffer.o
 
 .c.o:
 	$(CC) -c -Wall -I. $(CFLAGS) -D$(STD) $<
@@ -25,6 +25,8 @@ lf_fifo.o: lf_fifo.h lf_cas.h
 
 lf_fifo_test: lf_fifo.o lf_fifo_test.o
 	$(CC) lf_fifo.o lf_fifo_test.o -o lf_fifo_test
+
+lf_ring_buffer.o: lf_ring_buffer.h lf_portable_cas.h
 
 clean:
 	rm -f *~ *.o *.s core $(BIN)
