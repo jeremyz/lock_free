@@ -1,5 +1,5 @@
 /*
- * File     : lf_ring_buffer.h
+ * File     : lf_ring_buffer.c
  * Author   : Jérémy Zurcher  <jeremy@asynk.ch>
  * Date     : 05/01/010
  * License  :
@@ -47,6 +47,7 @@ lf_ring_buffer_t* lf_ring_buffer_create( int n_buf ) {
     r->read_from = -1;
     r->write_to = 0;
     r->write_delay=BACKOFF_DELAY_INIT;
+    r->read_delay=BACKOFF_DELAY_INIT;
     return r;
 }
 

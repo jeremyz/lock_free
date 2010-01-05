@@ -60,10 +60,10 @@ typedef struct ring_buffer {
 #define MARK_AS_FILLED( idx ) { r->buffer[(idx)].status=1; }
 #define MARK_AS_READ( idx ) { r->buffer[(idx)].status=0; }
 
-/* initialize an empty lf_ring_buffer struct */
+/* return an initialized lf_ring_buffer_t struct */
 lf_ring_buffer_t* lf_ring_buffer_create( int n_buf );
 
-/* destroy an lf_ring_buffer strcture */
+/* destroy an lf_ring_buffer_t struct */
 void lf_ring_buffer_destroy( lf_ring_buffer_t *r );
 
 /* write data into the ring buffer
