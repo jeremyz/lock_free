@@ -26,7 +26,7 @@
  */
 
 #include "lf_fifo.h"
-#include "stdlib.h"
+#include <stdlib.h>
 
 /* initialize an empty lf_fifo structure */
 void lf_fifo_init( lf_fifo_t *q ) {

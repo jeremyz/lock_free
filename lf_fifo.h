@@ -25,10 +25,10 @@
  *
  */
 
-#include "lf_cas.h"
-
 #ifndef _LF_FIFO_H_
 #define _LF_FIFO_H_
+
+#include "lf_cas.h"
 
 # ifdef __cplusplus
 extern "C" {
