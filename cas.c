@@ -67,16 +67,19 @@ static inline unsigned int cas( volatile split_t *mem,
 
 int test_compare_and_swap () {
     pointer_t mem, old, new;
+    new.concat = old.concat = 0;
     return compare_and_swap(&mem.concat, old.concat, new.concat);
 }
 
 int test_cas () {
     pointer_t mem, old, new;
+    new.concat = old.concat = 0;
     return cas(&mem.split, old.split, new.split);
 }
 
 void check_assign_a() {
     pointer_t a, b;
+    b.concat = 0;
     a.concat = b.concat;
 }
 
