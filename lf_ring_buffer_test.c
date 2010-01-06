@@ -6,11 +6,10 @@
 
 #include "lf_ring_buffer.h"
 
-#define BUFFER_LEN 5000000
+//#define BUFFER_LEN 5000000
+#define BUFFER_LEN 500
 
-static rb_data_t[BUFFER_LEN][RB_DATA_LEN]
-
-static const double secs_per_tick = 1.0 / CLOCKS_PER_SEC;
+static rb_data_t data[BUFFER_LEN][RB_DATA_LEN];
 
 static int64_t time_diff(struct timespec *t0, struct timespec *t1)
 {
@@ -23,7 +22,7 @@ static void print_now(char* s) {
 }
 
 static void report( int n, uint64_t dt ) {
-    fprintf(stdout,"%d operations in %d [ms] => %d [us] => %d [ns]\t%d [ns/op]\n", n, (int)(dt/1000000), (int)(dt/1000), (int)dt, (int)(dt/n) );
+    fprintf(stdout,"%d operations in %d [ms] => %d [us] => %d [ns]\t >>> %d [ns/op]\n", n, (int)(dt/1000000), (int)(dt/1000), (int)dt, (int)(dt/n) );
 }
 
 static void feed_data( int n){
@@ -33,15 +32,16 @@ static void feed_data( int n){
     }
 }
 
-static uint64_t sequential_writes( lf_ring_buffer_t *ring, int n ) {
+static uint64_t sequential_writes( lf_ring_buffer_t *ring, int n, int flags ) {
     int i;
+    rb_data_t data[RB_DATA_LEN];
     struct timespec start, end;
     
     print_now("sequential writes ... ");
 
     clock_gettime(CLOCK_MONOTONIC, &start);
 
-    for(i=0; i<n; i++) lf_ring_buffer_write( ring, data[i], 0 );
+    for(i=0; i<n; i++) lf_ring_buffer_write( ring, data, flags );
 
     clock_gettime(CLOCK_MONOTONIC, &end);
     printf("done.\n");
@@ -49,16 +49,16 @@ static uint64_t sequential_writes( lf_ring_buffer_t *ring, int n ) {
     return time_diff( &start, &end );
 }
 
-static uint64_t sequential_reads( lf_ring_buffer_t *ring, int n ) {
+static uint64_t sequential_reads( lf_ring_buffer_t *ring, int n, int flags ) {
     int i;
-    char data[20];
+    rb_data_t data[RB_DATA_LEN];
     struct timespec start, end;
     
     print_now("sequential reads ... ");
 
     clock_gettime(CLOCK_MONOTONIC, &start);
 
-    for(i=0; i<n; i++) lf_ring_buffer_read( ring, data, 0 );
+    for(i=0; i<n; i++) lf_ring_buffer_read( ring, data, flags );
 
     clock_gettime(CLOCK_MONOTONIC, &end);
     printf("done.\n");
@@ -77,12 +77,16 @@ int main( int argc, char** argv ) {
         exit( EXIT_FAILURE );
     }
 
+    /*
     print_now("feed the data ... ");
     feed_data(b_len);
     printf("done.\n");
+    */
 
-    report( b_len, sequential_writes( ring, b_len ) );
-    report( sequential_reads( ring, b_len ) );
+    report( b_len, sequential_writes( ring, b_len, 0 ) );
+    report( b_len, sequential_reads( ring, b_len, 0 ) );
+    report( b_len, sequential_writes( ring, b_len, 0 ) );
+    report( b_len, sequential_reads( ring, b_len, 0 ) );
 
     lf_ring_buffer_destroy( ring );
 

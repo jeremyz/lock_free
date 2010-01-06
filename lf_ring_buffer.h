@@ -38,8 +38,8 @@ extern "C" {
 #define BACKOFF_DELAY_INC   3000
 #define BACKOFF_DELAY_MAX   90000
 
-#define NO_BLOCK    1       /* if buffer is full, leave instead of try again and again */
-#define IS_NOT_BLOCKING( flags ) ( (flags)&NO_BLOCK )
+#define LFRB_NO_BLOCK    1      /* if buffer is full, leave instead of try again and again */
+#define IS_NOT_BLOCKING( flags ) ( (flags)&LFRB_NO_BLOCK )
 
 typedef struct ring_buffer {
     LFRB_BUFFER_TYPE *buffer;   /* buffer data */
