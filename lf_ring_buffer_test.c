@@ -6,8 +6,7 @@
 
 #include "lf_ring_buffer.h"
 
-//#define BUFFER_LEN 5000000
-#define BUFFER_LEN 500
+#define BUFFER_LEN 5000000
 
 static rb_data_t data[BUFFER_LEN][RB_DATA_LEN];
 
@@ -25,12 +24,14 @@ static void report( int n, uint64_t dt ) {
     fprintf(stdout,"%d operations in %d [ms] => %d [us] => %d [ns]\t >>> %d [ns/op]\n", n, (int)(dt/1000000), (int)(dt/1000), (int)dt, (int)(dt/n) );
 }
 
+/*
 static void feed_data( int n){
     int i;
     for(i=0; i<n; i++){
         sprintf(data[i],"hello world %04d\n",i);
     }
 }
+*/
 
 static uint64_t sequential_writes( lf_ring_buffer_t *ring, int n, int flags ) {
     int i;

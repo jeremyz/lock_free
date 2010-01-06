@@ -149,8 +149,15 @@ int lf_ring_buffer_read( lf_ring_buffer_t *r, void *data, int flags ) {
             if (next==r->n_buf) next=0;
             /* will do bad things if data dst buffer is too small !! */
             memcpy( data, r->buffer[idx].data, LFRB_DATA_SIZE );
-            _LOG_( "write: CAS %d %d %d\n", r->read_from, idx, next );
-            if( CompareAndSwapInt( &r->read_from, idx, next ) ) break;
+            _LOG_( "read: CAS %d %d %d\n", r->read_from, idx, next );
+            if( CompareAndSwapInt( &r->read_from, idx, next ) ) {
+                if(r->read_from==r->write_to) {
+                    /* the buffer is actually empty but writers will see it as full */
+                    _LOG_( "read: empty CAS %d %d %d\n", r->read_from, next, -1 );
+                    CompareAndSwapInt( &r->read_from, next, -1 );
+                }
+                break;
+            }
         } else { 
             _LOG_("read: not available\n");
             if(IS_NOT_BLOCKING(flags)) return -1;
