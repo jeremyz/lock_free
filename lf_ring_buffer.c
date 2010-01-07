@@ -63,7 +63,7 @@
 #endif
 
 /* initialize an empty lf_ring_buffer struct */
-lf_ring_buffer_t* lf_ring_buffer_create( int n_buf ) {
+lf_ring_buffer_t* lf_ring_buffer_create( size_t n_buf ) {
     /* alloc ring_buffer struct */
     lf_ring_buffer_t *r = malloc(sizeof(lf_ring_buffer_t));
     if(r==NULL) return NULL;
@@ -77,8 +77,8 @@ lf_ring_buffer_t* lf_ring_buffer_create( int n_buf ) {
     r->n_buf = n_buf;
     r->read_from = -1;
     r->write_to = 0;
-    r->write_delay=BACKOFF_DELAY_INIT;
-    r->read_delay=BACKOFF_DELAY_INIT;
+    r->write_delay = BACKOFF_DELAY_INIT;
+    r->read_delay = BACKOFF_DELAY_INIT;
     return r;
 }
 
@@ -119,7 +119,9 @@ int lf_ring_buffer_write( lf_ring_buffer_t *r, void *data, int flags ) {
             if(IS_NOT_BLOCKING(flags)) return -1;
             st.tv_nsec=r->write_delay;
             nanosleep(&st,NULL);
-            if(r->write_delay<BACKOFF_DELAY_MAX) r->write_delay+=BACKOFF_DELAY_INC;
+            if( !(BACKOFF_INC_NOT(flags)) ) {
+                if(r->write_delay<BACKOFF_DELAY_MAX) r->write_delay+=BACKOFF_DELAY_INC;
+            }
         }
     }
     /* try to set read_from on idx if it has not been initialized yet
@@ -132,7 +134,9 @@ int lf_ring_buffer_write( lf_ring_buffer_t *r, void *data, int flags ) {
     /* fill this buffer and mark it as filled */
     memcpy( r->buffer[idx].data, data, LFRB_DATA_SIZE );
     LFRB_MARK_AS_FILLED( r->buffer[idx] );
-    if(r->write_delay>BACKOFF_DELAY_INIT) r->write_delay-=BACKOFF_DELAY_INC;
+    if( !(BACKOFF_INC_NOT(flags)) ) {
+        if(r->write_delay>BACKOFF_DELAY_INIT) r->write_delay-=BACKOFF_DELAY_INC;
+    }
     return 0;
 }
 
@@ -163,12 +167,16 @@ int lf_ring_buffer_read( lf_ring_buffer_t *r, void *data, int flags ) {
             if(IS_NOT_BLOCKING(flags)) return -1;
             st.tv_nsec=r->read_delay;
             nanosleep(&st,NULL);
-            if(r->read_delay<BACKOFF_DELAY_MAX) r->read_delay+=BACKOFF_DELAY_INC;
+            if( !(BACKOFF_INC_NOT(flags)) ) {
+                if(r->read_delay<BACKOFF_DELAY_MAX) r->read_delay+=BACKOFF_DELAY_INC;
+            }
         }
     }
     /* finish the read process */
     LFRB_MARK_AS_READ( r->buffer[idx] );
-    if(r->read_delay>BACKOFF_DELAY_INIT) r->read_delay-=BACKOFF_DELAY_INC;
+    if( !(BACKOFF_INC_NOT(flags)) ) {
+        if(r->read_delay>BACKOFF_DELAY_INIT) r->read_delay-=BACKOFF_DELAY_INC;
+    }
     return 0;
 }
 
