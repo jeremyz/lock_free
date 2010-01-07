@@ -138,12 +138,14 @@ int main( int argc, char** argv ) {
         printf("parallel blocking read operations ...\n");
         sequential_reads( ring, b_len, 0 );
     }
+    /*
     for(i=5; i<=100;i*=22) {
         printf("%d parallel blocking with no backoff inc write operations .... \n",i);
         parallel_writes( i, ring, b_len, LFRB_NO_BACKOFF_INC );
         printf("parallel blocking read operations ...\n");
         sequential_reads( ring, b_len, LFRB_NO_BACKOFF_INC );
     }
+    */
     for(i=5; i<=100;i*=22) {
         printf("%d parallel non blocking write operations .... \n",i);
         parallel_writes( i, ring, b_len, LFRB_NO_BLOCK );

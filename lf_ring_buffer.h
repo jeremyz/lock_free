@@ -35,23 +35,14 @@ extern "C" {
 #include <sys/types.h>
 #include "lf_ring_buffer_data.h"
 
-#define BACKOFF_DELAY_INIT  100
-#define BACKOFF_DELAY_INC   100
-#define BACKOFF_DELAY_MAX   1000
-
 #define LFRB_NO_BLOCK   1       /* if buffer is full, leave instead of try again and again */
 #define IS_NOT_BLOCKING( flags ) ( (flags)&LFRB_NO_BLOCK )
-
-#define LFRB_NO_BACKOFF_INC     2       /* do not use BACKOFF_DELAY_X */
-#define BACKOFF_INC_NOT( flags ) ( (flags)&LFRB_NO_BACKOFF_INC )
 
 typedef struct ring_buffer {
     LFRB_BUFFER_TYPE *buffer;   /* buffer data */
     size_t n_buf;               /* number of buffers */
     int read_from;              /* index where to read data from */
     int write_to;               /* index where to write data to */
-    int write_delay;            /* backoff nanosleep to reduce fast looping when writing */
-    int read_delay;             /* backoff nanosleep to reduce fast looping when reading */
 } lf_ring_buffer_t;
 
 /* return an initialized lf_ring_buffer_t struct */

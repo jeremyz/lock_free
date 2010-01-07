@@ -62,6 +62,8 @@
     #define _LOG_( ... )
 #endif
 
+#define BACKOFF_NANO_SLEEP  100
+
 /* initialize an empty lf_ring_buffer struct */
 lf_ring_buffer_t* lf_ring_buffer_create( size_t n_buf ) {
     /* alloc ring_buffer struct */
@@ -77,8 +79,6 @@ lf_ring_buffer_t* lf_ring_buffer_create( size_t n_buf ) {
     r->n_buf = n_buf;
     r->read_from = -1;
     r->write_to = 0;
-    r->write_delay = BACKOFF_DELAY_INIT;
-    r->read_delay = BACKOFF_DELAY_INIT;
     return r;
 }
 
@@ -91,8 +91,7 @@ void lf_ring_buffer_destroy( lf_ring_buffer_t *r ) {
 /* write data into the ring buffer */
 int lf_ring_buffer_write( lf_ring_buffer_t *r, void *data, int flags ) {
     int idx, next;
-    struct timespec st;
-    st.tv_sec=0;
+    struct timespec backoff;
     /* reserve a buffer */
     for(;;){
         idx = r->write_to;
@@ -117,11 +116,9 @@ int lf_ring_buffer_write( lf_ring_buffer_t *r, void *data, int flags ) {
         } else {
             _LOG_("write: not available\n");
             if(IS_NOT_BLOCKING(flags)) return -1;
-            st.tv_nsec=r->write_delay;
-            nanosleep(&st,NULL);
-            if( !(BACKOFF_INC_NOT(flags)) ) {
-                if(r->write_delay<BACKOFF_DELAY_MAX) r->write_delay+=BACKOFF_DELAY_INC;
-            }
+            backoff.tv_sec = 0;
+            backoff.tv_nsec = BACKOFF_NANO_SLEEP;
+            nanosleep(&backoff,NULL);
         }
     }
     /* try to set read_from on idx if it has not been initialized yet
@@ -134,17 +131,13 @@ int lf_ring_buffer_write( lf_ring_buffer_t *r, void *data, int flags ) {
     /* fill this buffer and mark it as filled */
     memcpy( r->buffer[idx].data, data, LFRB_DATA_SIZE );
     LFRB_MARK_AS_FILLED( r->buffer[idx] );
-    if( !(BACKOFF_INC_NOT(flags)) ) {
-        if(r->write_delay>BACKOFF_DELAY_INIT) r->write_delay-=BACKOFF_DELAY_INC;
-    }
     return 0;
 }
 
 /* read data from the ring buffer */
 int lf_ring_buffer_read( lf_ring_buffer_t *r, void *data, int flags ) {
     int idx, next;
-    struct timespec st;
-    st.tv_sec=0;
+    struct timespec backoff;
     if(r->read_from==-1) return -1;
     for(;;) {
         idx = r->read_from;
@@ -165,18 +158,13 @@ int lf_ring_buffer_read( lf_ring_buffer_t *r, void *data, int flags ) {
         } else { 
             _LOG_("read: not available\n");
             if(IS_NOT_BLOCKING(flags)) return -1;
-            st.tv_nsec=r->read_delay;
-            nanosleep(&st,NULL);
-            if( !(BACKOFF_INC_NOT(flags)) ) {
-                if(r->read_delay<BACKOFF_DELAY_MAX) r->read_delay+=BACKOFF_DELAY_INC;
-            }
+            backoff.tv_sec = 0;
+            backoff.tv_nsec = BACKOFF_NANO_SLEEP;
+            nanosleep(&backoff,NULL);
         }
     }
     /* finish the read process */
     LFRB_MARK_AS_READ( r->buffer[idx] );
-    if( !(BACKOFF_INC_NOT(flags)) ) {
-        if(r->read_delay>BACKOFF_DELAY_INIT) r->read_delay-=BACKOFF_DELAY_INC;
-    }
     return 0;
 }
 
