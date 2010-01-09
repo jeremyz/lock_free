@@ -30,7 +30,7 @@ lf_fifo_test.o: lf_fifo_test.c
 lf_fifo_test: lf_fifo.o lf_fifo_test.o
 	$(CC) lf_fifo.o lf_fifo_test.o -o lf_fifo_test
 
-lf_ring_buffer.o: lf_ring_buffer.h lf_ring_buffer.c lf_portable_cas.h
+lf_ring_buffer.o: lf_ring_buffer.h lf_ring_buffer.c lf_ring_buffer_data.h lf_portable_cas.h
 lf_ring_buffer_test.o: lf_ring_buffer_test.c
 lf_ring_buffer_test: lf_ring_buffer.o lf_ring_buffer_test.o
 	$(CC) -lrt lf_ring_buffer.o lf_ring_buffer_test.o -o lf_ring_buffer_test

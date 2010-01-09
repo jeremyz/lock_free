@@ -18,4 +18,3 @@ typedef struct buffer {
 #define LFRB_MARK_AS_READ( el )     { (el).status=0; }
 #define LFRB_DATA_PTR( el )         (el).data
 
-

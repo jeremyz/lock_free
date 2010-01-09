@@ -31,28 +31,6 @@
 #include <string.h>
 #include <time.h>
 
-#if !defined LFRB_DATA_SIZE
-    #error "LFRB_DATA_SIZE is not defined"
-#endif
-#if !defined LFRB_BUFFER_TYPE
-    #error "LFRB_BUFFER_TAPE is not defined"
-#endif
-#if !defined LFRB_BUFFER_SIZE
-    #error "LFRB_BUFFER_SIZE is not defined"
-#endif
-#if !defined LFRB_IS_AVAILABLE
-    #error "LFRB_IS_AVAILABLE is not defined"
-#endif
-#if !defined LFRB_MARK_AS_FILLED
-    #error "LFRB_MARK_AS_FILLED is not defined"
-#endif
-#if !defined LFRB_MARK_AS_READ
-    #error "LFRB_MARK_AS_READ is not defined"
-#endif
-#if !defined LFRB_DATA_PTR
-    #error "LFRB_DATA_PTR is not defined"
-#endif
-
 //#define DEBUG_LFR_RING 1
 
 #ifdef DEBUG_LFR_RING
@@ -110,7 +88,7 @@ int lf_ring_buffer_write( lf_ring_buffer_t *r, void *data, int flags ) {
                 if( CompareAndSwapInt( &r->write_to, idx, next ) ) {
                     /* !!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!!!
                      * - if the ring is empty before this write operation (r->read_from==-1 or latest idx)
-                     * - and n_buf other threads call this same function before this point
+                     * - and n_buf other threads execute this same function before the next CAS is finished
                      * then, the last thread will :
                      * - see this buffer as available
                      * - and see the ring as empty instead of full !!!!!
@@ -135,7 +113,7 @@ int lf_ring_buffer_write( lf_ring_buffer_t *r, void *data, int flags ) {
         }
     }
     /* fill this buffer and mark it as filled */
-    memcpy( r->buffer[idx].data, data, LFRB_DATA_SIZE );
+    memcpy( LFRB_DATA_PTR(r->buffer[idx]), data, LFRB_DATA_SIZE );
     LFRB_MARK_AS_FILLED( r->buffer[idx] );
     return 0;
 }
@@ -150,7 +128,7 @@ int lf_ring_buffer_read( lf_ring_buffer_t *r, void *data, int flags ) {
             next = idx+1;
             if (next==r->n_buf) next=0;
             /* will do bad things if data dst buffer is too small !! */
-            memcpy( data, r->buffer[idx].data, LFRB_DATA_SIZE );
+            memcpy( data, LFRB_DATA_PTR(r->buffer[idx]), LFRB_DATA_SIZE );
             _LOG_( "read: CAS %d %d %d\n", r->read_from, idx, next );
             if( CompareAndSwapInt( &r->read_from, idx, next ) ) {
                 if(r->read_from==r->write_to) {
