@@ -63,8 +63,12 @@ static uint64_t sequential_reads( lf_ring_buffer_t *ring, int n, int flags ) {
     rb_data_t data[RB_DATA_LEN];
     struct timespec start, end;
     clock_gettime(CLOCK_MONOTONIC, &start);
-    for(i=0; i<n;) {
-        if(lf_ring_buffer_read( ring, data, flags )==0) { i++; } else { redo+=1; }
+    if(flags==0) {
+        for(i=0; i<n; i++) lf_ring_buffer_read( ring, data, flags );
+    } else {
+        for(i=0; i<n;) {
+            if(lf_ring_buffer_read( ring, data, flags )==0) { i++; } else { redo+=1; }
+        }
     }
     clock_gettime(CLOCK_MONOTONIC, &end);
     report( "read ", n, time_diff( &start, &end ), redo );
@@ -144,34 +148,34 @@ int main( int argc, char** argv ) {
     */
 
     printf("sequential non blocking write operations ...\n");
-    //report( "write", b_len, sequential_writes( ring, b_len, 0 ) );
     sequential_writes( ring, b_len, 0 );
     printf("sequential non blocking read operations ...\n");
-    //report( "read ", b_len, sequential_reads( ring, b_len, 0 ) );
     sequential_reads( ring, b_len, 0 );
+    if(!lf_ring_buffer_empty(ring)) { fprintf(stderr,"ring should be empty but is not\n"); exit( EXIT_FAILURE ); }
     printf("sequential blocking write operations ...\n");
-    //report( "write", b_len, sequential_writes( ring, b_len, 0 ) );
     sequential_writes( ring, b_len, LFRB_NO_BLOCK );
     printf("sequential blocking read operations ...\n");
-    //report( "read ", b_len, sequential_reads( ring, b_len, 0 ) );
     sequential_reads( ring, b_len, LFRB_NO_BLOCK );
+    if(!lf_ring_buffer_empty(ring)) { fprintf(stderr,"ring should be empty but is not\n"); exit( EXIT_FAILURE ); }
 
     for(i=5; i<=100;i*=2) {
         printf("%d parallel blocking with backoff inc write operations .... \n",i);
         parallel_op( 0, i, ring, b_len, 0 );
         printf("parallel blocking read operations ...\n");
         sequential_reads( ring, b_len, 0 );
+        if(!lf_ring_buffer_empty(ring)) { fprintf(stderr,"ring should be empty but is not\n"); exit( EXIT_FAILURE ); }
     }
     for(i=5; i<=100;i*=2) {
         printf("%d parallel non blocking write operations .... \n",i);
         parallel_op( 0, i, ring, b_len, LFRB_NO_BLOCK );
         printf("non blocking read operations ...\n");
         sequential_reads( ring, b_len, LFRB_NO_BLOCK );
+        if(!lf_ring_buffer_empty(ring)) { fprintf(stderr,"ring should be empty but is not\n"); exit( EXIT_FAILURE ); }
     }
-
     for(i=10; i<=100;i*=2) {
         printf("%d parallel blocking write and read operations .... \n",i*2);
         parallel_op( 3, i, ring, b_len, 0 );
+        if(!lf_ring_buffer_empty(ring)) { fprintf(stderr,"ring should be empty but is not\n"); exit( EXIT_FAILURE ); }
     }
 
     lf_ring_buffer_destroy( ring );

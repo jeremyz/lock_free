@@ -1,7 +1,7 @@
 
 typedef char rb_data_t;
 
-#define RB_DATA_LEN    63
+#define RB_DATA_LEN    24
 
 typedef struct buffer {
     char status;

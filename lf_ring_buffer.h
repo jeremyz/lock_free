@@ -51,6 +51,9 @@ lf_ring_buffer_t* lf_ring_buffer_create( size_t n_buf );
 /* destroy an lf_ring_buffer_t struct */
 void lf_ring_buffer_destroy( lf_ring_buffer_t *r );
 
+/* return 1 if is empty */
+int lf_ring_buffer_empty( lf_ring_buffer_t *r );
+
 /* write data into the ring buffer
  * return 0 on success
  * return -1 if IS_NOT_BLOCKING and buffer is full
