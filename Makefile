@@ -3,7 +3,7 @@
 CC     = gcc
 STD    = _GNU_SOURCE
 CFLAGS = -DDEBUG
-BIN    = cas container_of lock_free_queue_test lf_fifo_test lf_ring_buffer_test
+BIN    = cas container_of lock_free_queue_test lf_fifo_test lf_ring_buffer_test lf_ring_buffer_test2
 
 .c.o:
 	$(CC) -march=i686 -O2 -c -Wall -I. $(CFLAGS) -D$(STD) $<
@@ -34,6 +34,11 @@ lf_ring_buffer.o: lf_ring_buffer.h lf_ring_buffer.c lf_ring_buffer_data.h lf_por
 lf_ring_buffer_test.o: lf_ring_buffer_test.c
 lf_ring_buffer_test: lf_ring_buffer.o lf_ring_buffer_test.o
 	$(CC) -lrt lf_ring_buffer.o lf_ring_buffer_test.o -o lf_ring_buffer_test
+
+lf_ring_buffer2.o: lf_ring_buffer2.h lf_ring_buffer2.c lf_ring_buffer_data.h lf_portable_cas.h
+lf_ring_buffer_test2.o: lf_ring_buffer_test2.c
+lf_ring_buffer_test2: lf_ring_buffer2.o lf_ring_buffer_test2.o
+	$(CC) -lrt lf_ring_buffer2.o lf_ring_buffer_test2.o -o lf_ring_buffer_test2
 
 clean:
 	rm -f *~ *.o *.s core $(BIN)

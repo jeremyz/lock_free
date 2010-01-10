@@ -4,4 +4,5 @@ cas
 container_of
 lf_fifo_test
 lf_ring_buffer_test
+lf_ring_buffer_test2
 lock_free_queue_test
