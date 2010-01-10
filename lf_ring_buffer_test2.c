@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "lf_ring_buffer.h"
+#include "lf_ring_buffer2.h"
 
 #define BUFFER_LEN 65000
 
