@@ -83,25 +83,26 @@ int lf_ring_buffer_empty( lf_ring_buffer_t *r ) { return r->read_from==-1; }
 
 /* write data into the ring buffer */
 int lf_ring_buffer_write( lf_ring_buffer_t *r, void *data, int flags ) {
-    int idx, next;
+    int write_to, read_from, next;
     struct timespec backoff;
     int backoff_time = BACKOFF_NANO_SLEEP;
     /* reserve a buffer */
     for(;;){
-        idx = r->write_to;
-        if(LFRB_IS_AVAILABLE( r->buffer[idx] ) ) {
-            /* read_from==idx means that the buffer is full and that a writer thread which at first reserved this buffer
+        write_to = r->write_to;
+        read_from = r->read_from;
+        if(LFRB_IS_AVAILABLE( r->buffer[write_to] ) ) {
+            /* read_from==write_to means that the buffer is full and that a writer thread which at first reserved this buffer
              * hasn't had enough CPU cycles to call MARK_AS_FILLED
              */
-            if( r->read_from!=idx ) {
-                next = idx+1;
+            if( read_from!=write_to ) {
+                next = write_to+1;
                 if (next==r->n_buf) next=0;
                 /* what might have happend between IS_AVAILABLE and now :
                 * - a writter has reserved this buffer => write_to has moved => CAS fails
                 * - a reader has consumed a buffer => read_from has moved => we've got more space
                 */
-                _LOG_CAS_( "write: CAS %d %d %d\n", r->write_to, idx, next );
-                if( CompareAndSwapInt( &r->write_to, idx, next ) ) {
+                _LOG_CAS_( "write: CAS %d %d %d\n", r->write_to, write_to, next );
+                if( CompareAndSwapInt( &r->write_to, write_to, next ) ) {
                     /* !!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!!!
                      * - if the ring is empty before this write operation (r->read_from==-1 or latest idx)
                      * - and n_buf other threads execute this same function before the next CAS is finished
@@ -110,7 +111,7 @@ int lf_ring_buffer_write( lf_ring_buffer_t *r, void *data, int flags ) {
                      * - and see the ring as empty instead of full !!!!!
                      * so it will ends with two threads writing on this buffer
                      */
-                    if(r->read_from==-1) CompareAndSwapInt( &r->read_from, -1, idx );
+                    if(r->read_from==-1) CompareAndSwapInt( &r->read_from, -1, write_to );
                     break;
                 }
             } else {
@@ -130,25 +131,26 @@ int lf_ring_buffer_write( lf_ring_buffer_t *r, void *data, int flags ) {
         backoff_time += BACKOFF_NANO_SLEEP;
     }
     /* fill this buffer and mark it as filled */
-    memcpy( LFRB_DATA_PTR(r->buffer[idx]), data, LFRB_DATA_SIZE );
-    LFRB_MARK_AS_FILLED( r->buffer[idx] );
+    memcpy( LFRB_DATA_PTR(r->buffer[write_to]), data, LFRB_DATA_SIZE );
+    LFRB_MARK_AS_FILLED( r->buffer[write_to] );
     return 0;
 }
 
 /* read data from the ring buffer */
 int lf_ring_buffer_read( lf_ring_buffer_t *r, void *data, int flags ) {
-    int idx, next;
+    int write_to, read_from, next;
     struct timespec backoff;
     int backoff_time = BACKOFF_NANO_SLEEP;
     for(;;) {
-        idx = r->read_from;
-        if( !(LFRB_IS_AVAILABLE( r->buffer[idx] )) && r->read_from!=-1 ) {
-            next = idx+1;
+        write_to = r->write_to;
+        read_from = r->read_from;
+        if( !(LFRB_IS_AVAILABLE( r->buffer[read_from] )) && read_from!=-1 ) {
+            next = read_from+1;
             if (next==r->n_buf) next=0;
             /* will do bad things if data dst buffer is too small !! */
-            memcpy( data, LFRB_DATA_PTR(r->buffer[idx]), LFRB_DATA_SIZE );
-            _LOG_CAS_( "read: CAS %d %d %d\n", r->read_from, idx, next );
-            if( CompareAndSwapInt( &r->read_from, idx, next ) ) {
+            memcpy( data, LFRB_DATA_PTR(r->buffer[read_from]), LFRB_DATA_SIZE );
+            _LOG_CAS_( "read: CAS %d %d %d\n", r->read_from, read_from, next );
+            if( CompareAndSwapInt( &r->read_from, read_from, next ) ) {
                 if(r->read_from==r->write_to) {
                     /* the buffer is empty but writers will see it as full */
                     _LOG_CAS_( "read: empty CAS %d %d %d\n", r->read_from, next, -1 );
@@ -166,7 +168,7 @@ int lf_ring_buffer_read( lf_ring_buffer_t *r, void *data, int flags ) {
         backoff_time += BACKOFF_NANO_SLEEP;
     }
     /* finish the read process */
-    LFRB_MARK_AS_READ( r->buffer[idx] );
+    LFRB_MARK_AS_READ( r->buffer[read_from] );
     return 0;
 }
 
