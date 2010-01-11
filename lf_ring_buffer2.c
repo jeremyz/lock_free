@@ -38,11 +38,11 @@
 #ifdef DEBUG_LFRB
     #include <stdio.h>
     #define _LOG_KO_( ... ) fprintf(stdout,__VA_ARGS__)
-    #define _LOG_CAS_( ... ) fprintf(stdout,__VA_ARGS__)
+    #define _LOG_CAS_( ... )fprintf(stdout,__VA_ARGS__)
 #elif defined DEBUG_LFRB_CAS
     #include <stdio.h>
     #define _LOG_KO_( ... )
-    #define _LOG_CAS_( ... ) fprintf(stdout,__VA_ARGS__)
+    #define _LOG_CAS_( ... )fprintf(stdout,__VA_ARGS__)
 #elif defined DEBUG_LFRB_KO
     #include <stdio.h>
     #define _LOG_KO_( ... ) fprintf(stdout,__VA_ARGS__)
@@ -52,9 +52,16 @@
     #define _LOG_CAS_( ... )
 #endif
 
-#define BACKOFF_NANO_SLEEP  100000
+#define BACKOFF_NANO_SLEEP  10
 
 #define USHORTMAX 0xffff
+
+/* An unsigned int (indexes) is used to store both read_from and write_to indexes
+ * so that 32 bits compare and swap may be used to update both in one atomic instruction call.
+ * To be able to differenciate an empty buffer from a full buffer,
+ * read_from part of indexes is set to 0xffff (USHORTMAX) when the buffer is empty.
+ * Thus the maximum size of the buffer is 0xffff-1 = 65534 elements
+ */
 
 /* initialize an empty lf_ring_buffer struct */
 lf_ring_buffer_t* lf_ring_buffer_create( size_t n_buf ) {
@@ -64,7 +71,7 @@ lf_ring_buffer_t* lf_ring_buffer_create( size_t n_buf ) {
     /* alloc ring_buffer struct */
     lf_ring_buffer_t *r = malloc(sizeof(lf_ring_buffer_t));
     if(r==NULL) return NULL;
-    /* */
+    /* alloc buffer */
     r->buffer = malloc(LFRB_BUFFER_SIZE*n_buf);
     if(r->buffer==NULL) {
         free(r);
@@ -99,9 +106,9 @@ int lf_ring_buffer_write( lf_ring_buffer_t *r, void *data, int flags ) {
         read_from = current>>16;
         /*
          * check if the buffer is available,
-         * if it is but read_from==write,
-         * it means that the buffer is full and that a writer thread which at first reserved this buffer
-         * hasn't had enough CPU cycles to call MARK_AS_FILLED
+         * if read_from==write_to the buffer is full
+         * if it is available and full, it means that a writer thread which reserved this buffer
+         * hadn't had enough CPU cycles to call MARK_AS_FILLED
          */
         if( LFRB_IS_AVAILABLE( r->buffer[write_to] ) && read_from!=write_to ) {
             next = write_to+1;
@@ -116,9 +123,10 @@ int lf_ring_buffer_write( lf_ring_buffer_t *r, void *data, int flags ) {
             _LOG_CAS_( "write: CAS %u %u %u\n", r->indexes, current, next );
             if( CompareAndSwapInt( &r->indexes, current, next ) ) break;
         } else {
-            _LOG_KO_("write: fail : %d %d %d\n",LFRB_IS_AVAILABLE(r->buffer[write_to]),write_to,read_from);
+            _LOG_KO_("write: impossible : wt:%d rf:%d wa:%d\n",write_to,read_from,LFRB_IS_AVAILABLE(r->buffer[write_to]));
             if(IS_NOT_BLOCKING(flags)) return -1;
         }
+        /* sleep */
         backoff.tv_sec = 0;
         backoff.tv_nsec = backoff_time;
         nanosleep(&backoff,NULL);
@@ -137,31 +145,36 @@ int lf_ring_buffer_read( lf_ring_buffer_t *r, void *data, int flags ) {
     struct timespec backoff;
     int backoff_time = BACKOFF_NANO_SLEEP;
     for(;;) {
+        /* copy indexes and split it */
         current = r->indexes;
         write_to = current&0xffff;
         read_from = current>>16;
-        if( !(LFRB_IS_AVAILABLE( r->buffer[read_from] )) && read_from!=USHORTMAX ) {
+        /*
+         * the buffer may be non empty but available if a writer thread hadn't had enough CPU cycles to mark the buffer as filled
+         */
+        if( read_from==USHORTMAX || LFRB_IS_AVAILABLE( r->buffer[read_from] ) ) {
+            _LOG_KO_("read : impossible : wt:%d rf:%d ra:%d\n",write_to,read_from,LFRB_IS_AVAILABLE(r->buffer[read_from]));
+            if(IS_NOT_BLOCKING(flags)) return -1;
+        } else {
             tmp = read_from +1;
             if (tmp==r->n_buf) tmp=0;
-            /* is the buffer empty */
-            if ( tmp==write_to) {
+            /* set the buffer empty if needed */
+            if (tmp==write_to) {
                 tmp = USHORTMAX;
             }
             next = tmp<<16 | write_to;
+            /* try to update indexes */
             _LOG_CAS_( "read: CAS %u %u %u\n", r->indexes, current, next );
             if( CompareAndSwapInt( &r->indexes, current , next ) ) break;
-        } else {
-            _LOG_KO_("read: ring empty\n");
-            if(IS_NOT_BLOCKING(flags)) return -1;
         }
+        /* sleep */
         backoff.tv_sec = 0;
         backoff.tv_nsec = backoff_time;
         nanosleep(&backoff,NULL);
         backoff_time += BACKOFF_NANO_SLEEP;
     }
-    /* will do bad things if data dst buffer is too small !! */
+    /* copy this buffer and mark it as read */
     memcpy( data, LFRB_DATA_PTR(r->buffer[read_from]), LFRB_DATA_SIZE );
-    /* finish the read process */
     LFRB_MARK_AS_READ( r->buffer[read_from] );
     return 0;
 }
