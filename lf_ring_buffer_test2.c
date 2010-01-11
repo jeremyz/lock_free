@@ -30,6 +30,7 @@ struct thread_params {
     lf_ring_buffer_t *ring;
     int n;
     int flags;
+    uint64_t dt;
 };
 
 /*
@@ -78,19 +79,20 @@ static uint64_t sequential_reads( lf_ring_buffer_t *ring, int n, int flags ) {
 void* writer_thread( void* param ) {
     struct thread_params *params = (struct thread_params*)param;
     //report( "write", params->n, sequential_writes( params->ring, params->n, params->flags ) );
-    sequential_writes( params->ring, params->n, params->flags );
+    params->dt = sequential_writes( params->ring, params->n, params->flags );
     return NULL;
 }
 
 void* reader_thread( void* param ) {
     struct thread_params *params = (struct thread_params*)param;
     //report( "read ", params->n, sequential_reads( params->ring, params->n, params->flags ) );
-    sequential_reads( params->ring, params->n, params->flags );
+    params->dt = sequential_reads( params->ring, params->n, params->flags );
     return NULL;
 }
 
 static void parallel_op( int op, int nt, lf_ring_buffer_t *ring, int n, int flags ) {
     int i;
+    uint64_t dt;
     
     pthread_t *threads = malloc( sizeof(pthread_t)*nt);
     struct thread_params *params = malloc( sizeof(struct thread_params)*nt);
@@ -121,9 +123,13 @@ static void parallel_op( int op, int nt, lf_ring_buffer_t *ring, int n, int flag
             }
         }
     }
+    dt = 0;
     for(i=0; i<nt; i++) {
         pthread_join( threads[i], NULL );
+        dt += params[i].dt;
     }
+    dt/=nt;
+    fprintf(stdout,"\t\t\t       Mean : %4d [ms] => %7d [us] => %10d [ns]\t >>> %6d [ns/op]\n",(int)(dt/1000000), (int)(dt/1000), (int)dt, (int)(dt/(n/nt)) );
     /* empty the ring */
     free(threads);
     free(params);
