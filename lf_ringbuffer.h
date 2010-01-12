@@ -39,32 +39,32 @@ extern "C" {
 #define IS_NOT_BLOCKING( flags ) ( (flags)&LFRB_NO_BLOCK )
 
 /* the ring buffer structure */
-typedef struct ring_buffer {
+typedef struct ringbuffer {
     LFRB_BUFFER_TYPE *buffer;   /* buffer data */
     size_t n_buf;               /* number of buffers, max 65534, see implementation for details */
     unsigned int indexes;       /* indexes where to read_from and write_to */
-} lf_ring_buffer_t;
+} lf_ringbuffer_t;
 
-/* return an initialized lf_ring_buffer_t struct, size is limited to 65534, see implementation for details */
-lf_ring_buffer_t* lf_ring_buffer_create( size_t n_buf );
+/* return an initialized lf_ringbuffer_t struct, size is limited to 65534, see implementation for details */
+lf_ringbuffer_t* lf_ringbuffer_create( size_t n_buf );
 
-/* destroy an lf_ring_buffer_t struct */
-void lf_ring_buffer_destroy( lf_ring_buffer_t *r );
+/* destroy an lf_ringbuffer_t struct */
+void lf_ringbuffer_destroy( lf_ringbuffer_t *r );
 
 /* return 1 if is empty */
-int lf_ring_buffer_empty( lf_ring_buffer_t *r );
+int lf_ringbuffer_empty( lf_ringbuffer_t *r );
 
 /* write data into the ring buffer
  * return 0 on success
  * return -1 if IS_NOT_BLOCKING and buffer is full
  */
-int lf_ring_buffer_write( lf_ring_buffer_t *r, void *data, int flags );
+int lf_ringbuffer_write( lf_ringbuffer_t *r, void *data, int flags );
 
 /* read data from the ring buffer
  * return 0 on success
  * return -1 if IS_NOT_BLOCKING and buffer is empty
  */
-int lf_ring_buffer_read( lf_ring_buffer_t *r, void *data, int flags );
+int lf_ringbuffer_read( lf_ringbuffer_t *r, void *data, int flags );
 
 # ifdef __cplusplus
 }

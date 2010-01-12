@@ -63,13 +63,13 @@
  * Thus the maximum size of the buffer is 0xffff-1 = 65534 elements
  */
 
-/* initialize an empty lf_ring_buffer struct */
-lf_ring_buffer_t* lf_ring_buffer_create( size_t n_buf ) {
+/* initialize an empty lf_ringbuffer struct */
+lf_ringbuffer_t* lf_ringbuffer_create( size_t n_buf ) {
     if(n_buf>=USHORTMAX) {
         return NULL;
     }
-    /* alloc ring_buffer struct */
-    lf_ring_buffer_t *r = malloc(sizeof(lf_ring_buffer_t));
+    /* alloc ringbuffer struct */
+    lf_ringbuffer_t *r = malloc(sizeof(lf_ringbuffer_t));
     if(r==NULL) return NULL;
     /* alloc buffer */
     r->buffer = malloc(LFRB_BUFFER_SIZE*n_buf);
@@ -83,17 +83,17 @@ lf_ring_buffer_t* lf_ring_buffer_create( size_t n_buf ) {
     return r;
 }
 
-/* destroy an lf_ring_buffer strcture */
-void lf_ring_buffer_destroy( lf_ring_buffer_t *r ) {
+/* destroy an lf_ringbuffer strcture */
+void lf_ringbuffer_destroy( lf_ringbuffer_t *r ) {
     free(r->buffer);
     free(r);
 }
 
 /* return 1 if is empty */
-int lf_ring_buffer_empty( lf_ring_buffer_t *r ) { return (r->indexes>>16)==USHORTMAX; }
+int lf_ringbuffer_empty( lf_ringbuffer_t *r ) { return (r->indexes>>16)==USHORTMAX; }
 
 /* write data into the ring buffer */
-int lf_ring_buffer_write( lf_ring_buffer_t *r, void *data, int flags ) {
+int lf_ringbuffer_write( lf_ringbuffer_t *r, void *data, int flags ) {
     unsigned int current, next;
     unsigned int write_to, read_from;
     struct timespec backoff;
@@ -139,7 +139,7 @@ int lf_ring_buffer_write( lf_ring_buffer_t *r, void *data, int flags ) {
 }
 
 /* read data from the ring buffer */
-int lf_ring_buffer_read( lf_ring_buffer_t *r, void *data, int flags ) {
+int lf_ringbuffer_read( lf_ringbuffer_t *r, void *data, int flags ) {
     unsigned int current, next;
     unsigned int write_to, read_from, tmp;
     struct timespec backoff;
