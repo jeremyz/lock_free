@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "lf_ring_buffer.h"
+#include "lf_ringbuffer.h"
 
-#define BUFFER_LEN 5000000
+#define BUFFER_LEN 65000
 
 //static rb_data_t data[BUFFER_LEN][RB_DATA_LEN];
 
@@ -164,21 +164,21 @@ int main( int argc, char** argv ) {
     sequential_reads( ring, b_len, LFRB_NO_BLOCK );
     if(!lf_ring_buffer_empty(ring)) { fprintf(stderr,"ring should be empty but is not\n"); exit( EXIT_FAILURE ); }
 
-    for(i=5; i<=100;i*=2) {
+    for(i=5; i<=50;i*=2) {
         printf("%d parallel blocking with backoff inc write operations .... \n",i);
         parallel_op( 0, i, ring, b_len, 0 );
         printf("parallel blocking read operations ...\n");
         sequential_reads( ring, b_len, 0 );
         if(!lf_ring_buffer_empty(ring)) { fprintf(stderr,"ring should be empty but is not\n"); exit( EXIT_FAILURE ); }
     }
-    for(i=5; i<=100;i*=2) {
+    for(i=5; i<=50;i*=2) {
         printf("%d parallel non blocking write operations .... \n",i);
         parallel_op( 0, i, ring, b_len, LFRB_NO_BLOCK );
         printf("non blocking read operations ...\n");
         sequential_reads( ring, b_len, LFRB_NO_BLOCK );
         if(!lf_ring_buffer_empty(ring)) { fprintf(stderr,"ring should be empty but is not\n"); exit( EXIT_FAILURE ); }
     }
-    for(i=10; i<=100;i*=2) {
+    for(i=10; i<=50;i*=2) {
         printf("%d parallel blocking write and read operations .... \n",i*2);
         parallel_op( 3, i, ring, b_len, 0 );
         if(!lf_ring_buffer_empty(ring)) { fprintf(stderr,"ring should be empty but is not\n"); exit( EXIT_FAILURE ); }

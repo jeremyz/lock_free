@@ -25,7 +25,7 @@
  *
  */
 
-#include "lf_ring_buffer2.h"
+#include "lf_ringbuffer.h"
 #include "lf_portable_cas.h"
 #include <stdlib.h>
 #include <string.h>

@@ -33,19 +33,19 @@ extern "C" {
 # endif /* __cplusplus */
 
 #include <sys/types.h>
-#include "lf_ring_buffer_data.h"
+#include "lf_ringbuffer_data.h"
 
 #define LFRB_NO_BLOCK   1       /* if buffer is full, leave instead of try again and again */
 #define IS_NOT_BLOCKING( flags ) ( (flags)&LFRB_NO_BLOCK )
 
+/* the ring buffer structure */
 typedef struct ring_buffer {
     LFRB_BUFFER_TYPE *buffer;   /* buffer data */
-    size_t n_buf;               /* number of buffers */
-    int read_from;              /* index where to read data from */
-    int write_to;               /* index where to write data to */
+    size_t n_buf;               /* number of buffers, max 65534, see implementation for details */
+    unsigned int indexes;       /* indexes where to read_from and write_to */
 } lf_ring_buffer_t;
 
-/* return an initialized lf_ring_buffer_t struct */
+/* return an initialized lf_ring_buffer_t struct, size is limited to 65534, see implementation for details */
 lf_ring_buffer_t* lf_ring_buffer_create( size_t n_buf );
 
 /* destroy an lf_ring_buffer_t struct */
