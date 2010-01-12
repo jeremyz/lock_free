@@ -54,6 +54,12 @@ void lf_ringbuffer_destroy( lf_ringbuffer_t *r );
 /* return 1 if is empty */
 int lf_ringbuffer_empty( lf_ringbuffer_t *r );
 
+/* return the count of filled buffers */
+size_t lf_ringbuffer_read_size( lf_ringbuffer_t *r );
+
+/* return the count of available buffers */
+size_t lf_ringbuffer_write_size( lf_ringbuffer_t *r );
+
 /* write data into the ring buffer
  * return 0 on success
  * return -1 if IS_NOT_BLOCKING and buffer is full

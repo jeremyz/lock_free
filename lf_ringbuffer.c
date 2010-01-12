@@ -83,7 +83,7 @@ lf_ringbuffer_t* lf_ringbuffer_create( size_t n_buf ) {
     return r;
 }
 
-/* destroy an lf_ringbuffer strcture */
+/* destroy an lf_ringbuffer struct */
 void lf_ringbuffer_destroy( lf_ringbuffer_t *r ) {
     free(r->buffer);
     free(r);
@@ -91,6 +91,32 @@ void lf_ringbuffer_destroy( lf_ringbuffer_t *r ) {
 
 /* return 1 if is empty */
 int lf_ringbuffer_empty( lf_ringbuffer_t *r ) { return (r->indexes>>16)==USHORTMAX; }
+
+/* return count of filled buffers */
+size_t lf_ringbuffer_read_size( lf_ringbuffer_t *r ) {
+    unsigned int write_to, read_from;
+    read_from = (r->indexes)>>16;
+    if(read_from==USHORTMAX) return 0;
+    write_to = (r->indexes)&0xffff;
+    if(write_to>read_from) {
+        return write_to-read_from;
+    } else {
+        return r->n_buf-read_from+write_to;
+    }
+}
+
+/* return count of available buffers */
+size_t lf_ringbuffer_write_size( lf_ringbuffer_t *r ) {
+    unsigned int write_to, read_from;
+    read_from = (r->indexes)>>16;
+    if(read_from==USHORTMAX) return r->n_buf;
+    write_to = (r->indexes)&0xffff;
+    if(write_to>read_from) {
+        return r->n_buf-write_to+read_from;
+    } else {
+        return read_from-write_to;
+    }
+}
 
 /* write data into the ring buffer */
 int lf_ringbuffer_write( lf_ringbuffer_t *r, void *data, int flags ) {
