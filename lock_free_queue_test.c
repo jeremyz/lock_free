@@ -1,5 +1,5 @@
 /*
- * File     : lock_free_queue.c
+ * File     : lock_free_queue_test.c
  * Author   : Jérémy Zurcher  <jeremy@asynk.ch>
  * Date     : 01/11/09 
  * License  :

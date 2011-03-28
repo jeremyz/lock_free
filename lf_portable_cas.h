@@ -1,5 +1,5 @@
 /*
- * File     : portable_cas.h
+ * File     : lf_portable_cas.h
  * Author   : Jérémy Zurcher  <jeremy@asynk.ch>
  * Date     : 05/01/10
  * License  :

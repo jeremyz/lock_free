@@ -1,5 +1,5 @@
 /*
- * File     : lfq.c
+ * File     : lf_fifo.c
  * Author   : Jérémy Zurcher  <jeremy@asynk.ch>
  * Date     : 01/11/09 
  * License  :

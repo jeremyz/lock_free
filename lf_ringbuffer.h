@@ -1,5 +1,5 @@
 /*
- * File     : lf_ring_buffer.h
+ * File     : lf_ringbuffer.h
  * Author   : Jérémy Zurcher  <jeremy@asynk.ch>
  * Date     : 05/01/010
  * License  :

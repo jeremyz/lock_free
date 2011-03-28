@@ -1,5 +1,5 @@
 /*
- * File     : atomic.c
+ * File     : cas.c
  * Author   : Jérémy Zurcher  <jeremy@asynk.ch>
  * Date     : 01/11/09 
  * License  :
