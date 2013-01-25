@@ -6,11 +6,11 @@ CFLAGS = -DDEBUG
 BIN    = cas container_of lock_free_queue_test lf_fifo_test lf_ringbuffer_test
 
 .c.o:
-	$(CC) -march=i686 -O2 -c -Wall -I. $(CFLAGS) -D$(STD) $<
+	$(CC) -O2 -c -Wall -I. $(CFLAGS) -D$(STD) $<
 
 all: $(BIN)
 
-cas.o: cas.c
+cas.o: cas.c cas.h
 cas: cas.o
 	$(CC) -S cas.c
 	$(CC) cas.o -o cas
@@ -33,7 +33,7 @@ lf_fifo_test: lf_fifo.o lf_fifo_test.o
 lf_ringbuffer.o: lf_ringbuffer.h lf_ringbuffer.c lf_ringbuffer_data.h lf_portable_cas.h
 lf_ringbuffer_test.o: lf_ringbuffer_test.c lf_ringbuffer.h
 lf_ringbuffer_test: lf_ringbuffer.o lf_ringbuffer_test.o
-	$(CC) -lrt lf_ringbuffer.o lf_ringbuffer_test.o -o lf_ringbuffer_test
+	$(CC) -lpthread lf_ringbuffer.o lf_ringbuffer_test.o -o lf_ringbuffer_test
 
 clean:
 	rm -f *~ *.o *.s core $(BIN)

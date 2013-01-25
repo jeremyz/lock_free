@@ -1,7 +1,7 @@
 /*
  * File     : cas.c
  * Author   : Jérémy Zurcher  <jeremy@asynk.ch>
- * Date     : 01/11/09 
+ * Date     : 01/11/09
  * License  :
  *
  *  Permission is hereby granted, free of charge, to any person obtaining
@@ -11,10 +11,10 @@
  *  distribute, sublicense, and/or sell copies of the Software, and to
  *  permit persons to whom the Software is furnished to do so, subject to
  *  the following conditions:
- *  
+ *
  *  The above copyright notice and this permission notice shall be
  *  included in all copies or substantial portions of the Software.
- *  
+ *
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -25,102 +25,58 @@
  *
  */
 
+#include "cas.h"
 #include <stdio.h>
+#include <stdlib.h>
 
-typedef struct split {
-    volatile void *ptr;
-    volatile unsigned int count;
-} split_t;
-
-typedef union pointer {
-    split_t split;
-    volatile unsigned long long concat;
-} pointer_t;
-
-
-/* CMPXCHG8B m64   Compare EDX:EAX with m64. If equal, set ZF and load ECX:EBX into m64. Else, clear ZF and load m64 into EDX:EAX. */
-static inline unsigned int compare_and_swap(volatile unsigned long long *mem,
-                                            volatile unsigned long long old,
-                                            volatile unsigned long long new) {
-    char result;
-    __asm__ __volatile__("lock; cmpxchg8b %0; setz %1;"
-            : "=m"(*mem), "=q"(result)
-            : "m"(*mem), "d" ((unsigned long)(old>>32)), "a" ((unsigned long)old),
-            "c" ((unsigned long)(new>>32)), "b" ((unsigned long)new)
-            : "memory");
-    return (int)result;
+static void _check(int cond, const char *msg)
+{
+    if(!cond)
+    {
+        fprintf(stderr,"%s\n",msg);
+        exit(EXIT_FAILURE);
+    }
 }
 
-/* CMPXCHG8B m64   Compare EDX:EAX with m64. If equal, set ZF and load ECX:EBX into m64. Else, clear ZF and load m64 into EDX:EAX. */
-static inline unsigned int cas( volatile split_t *mem,
-                                volatile split_t old,
-                                volatile split_t new ) {
-    char result;
-    __asm__ __volatile__("lock; cmpxchg8b %0; setz %1;"
-            : "=m"(*mem), "=q"(result)
-            : "m"(*mem), "d" (old.count), "a" (old.ptr),
-            "c" (new.count), "b" (new.ptr)
-            : "memory");
-    return (int)result;
-}
+int main( int argc, char*argv[], char*env[] )
+{
+   int ret;
+   int v1, v2, v3, v4, v5;
 
+   cas_pointer_t mem, old_val, new_val;
 
-int test_compare_and_swap () {
-    pointer_t mem, old, new;
-    new.concat = old.concat = 0;
-    return compare_and_swap(&mem.concat, old.concat, new.concat);
-}
+   if((int)sizeof(cas_pointer_t)==16)
+   {
+       printf("running _x86_64_ code\n");
+   }
+   if((int)sizeof(cas_pointer_t)==8)
+   {
+       printf("running i686 code\n");
+   }
 
-int test_cas () {
-    pointer_t mem, old, new;
-    new.concat = old.concat = 0;
-    return cas(&mem.split, old.split, new.split);
-}
+   _hi(old_val,&v1); _lo(old_val,&v2);
+   _hi(new_val,&v3); _lo(new_val,&v4);
 
-void check_assign_a() {
-    pointer_t a, b;
-    b.concat = 0;
-    a.concat = b.concat;
-}
+   _hi(mem,&v1); _lo(mem,&v2);
+   ret = cas(&mem, old_val, new_val);
+   _check((ret==1)," 1 return value is wrong");
+   _check((_hi_eq(mem,&v3)),"1 hi value is wrong");
+   _check((_lo_eq(mem,&v4)),"1 lo value is wrong");
 
-void check_assign_b() {
-    pointer_t a, b;
-    a=b;
-}
+   _hi(mem,&v1); _lo(mem,&v5);
+   ret = cas(&mem, old_val, new_val);
+   _check((ret==0),"2 return value is wrong");
+   _check((_hi_eq(mem,&v1)),"2 hi value is wrong");
+   _check((_lo_eq(mem,&v5)),"2 lo value is wrong");
 
-int main( int argc, char*argv[], char*env[] ) {
-    int ret;
+   _hi(mem,&v5); _lo(mem,&v1);
+   ret = cas(&mem, old_val, new_val);
+   _check((ret==0),"3 return value is wrong");
+   _check((_hi_eq(mem,&v5)),"3 hi value is wrong");
+   _check((_lo_eq(mem,&v1)),"3 lo value is wrong");
 
-    pointer_t mem, old, new;
-    
-    mem.split.count = 0;
-    old.split.count = 6;
-    new.split.count = 666;
-    mem.split.ptr = (void*)&argc;
-    old.split.ptr = (void*)&argc;
-    new.split.ptr = (void*)&argv;
+   printf("success\n");
 
-    ret = compare_and_swap(&mem.concat, old.concat, new.concat);
-    printf("ret %d -> (%d,%X)\n", ret, mem.split.count, (unsigned int)mem.split.ptr);
-
-    mem.split.count=6;
-    ret = compare_and_swap(&mem.concat, old.concat, new.concat);
-    printf("ret %d -> (%d,%X)\n", ret, mem.split.count, (unsigned int)mem.split.ptr);
-
-    mem.split.count = 0;
-    old.split.count = 6;
-    new.split.count = 666;
-    mem.split.ptr = (void*)&argc;
-    old.split.ptr = (void*)&argc;
-    new.split.ptr = (void*)&argv;
-
-    ret = cas(&mem.split, old.split, new.split);
-    printf("ret %d -> (%d,%X)\n", ret, mem.split.count, (unsigned int)mem.split.ptr);
-
-    mem.split.count=6;
-    ret = cas(&mem.split, old.split, new.split);
-    printf("ret %d -> (%d,%X)\n", ret, mem.split.count, (unsigned int)mem.split.ptr);
-
-    return 0;
+   return EXIT_SUCCESS;
 }
 
