@@ -72,8 +72,8 @@ inline int cas(volatile cas_pointer_t* mem, cas_pointer_t old_val, cas_pointer_t
 
 #if defined(__i386__) && defined(__GNUC__)
 
-    asm volatile("lock; cmpxchg8b (%6);"
-            "setz %7; "
+    asm volatile("lock cmpxchg8b (%6);"
+            "setz %7;"
             : "=a" ( old_val.lo ),
               "=d" ( old_val.hi )
             : "0"  ( old_val.lo ),
@@ -88,15 +88,15 @@ inline int cas(volatile cas_pointer_t* mem, cas_pointer_t old_val, cas_pointer_t
 #elif defined(__x86_64__) && defined(__GNUC__)
 
     asm volatile (
-            "lock cmpxchg16b %1\n\t"
-            "setz %0"
+            "lock cmpxchg16b %1;"
+            "setz %0;"
             : "=q" ( success )
             , "+m" ( *mem )
             , "+d" ( old_val.hi )
             , "+a" ( old_val.lo )
             : "c"  ( new_val.hi )
             , "b"  ( new_val.lo )
-            : "cc"
+            : "cc", "memory"
             );
 #endif
 
