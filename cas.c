@@ -31,11 +31,11 @@
 
 static void _check(int cond, const char *msg)
 {
-    if(!cond)
-    {
+   if(!cond)
+     {
         fprintf(stderr,"%s\n",msg);
         exit(EXIT_FAILURE);
-    }
+     }
 }
 
 int main( int argc, char*argv[], char*env[] )
@@ -46,13 +46,13 @@ int main( int argc, char*argv[], char*env[] )
    cas_pointer_t mem, old_val, new_val;
 
    if((int)sizeof(cas_pointer_t)==16)
-   {
-       printf("running _x86_64_ code\n");
-   }
+     {
+        printf("running _x86_64_ code\n");
+     }
    if((int)sizeof(cas_pointer_t)==8)
-   {
-       printf("running i686 code\n");
-   }
+     {
+        printf("running i686 code\n");
+     }
 
    _hi(old_val,&v1); _lo(old_val,&v2);
    _hi(new_val,&v3); _lo(new_val,&v4);
