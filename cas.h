@@ -36,35 +36,30 @@ extern "C" {
 
 #if defined(__i386__) && defined(__GNUC__)
 
-struct _cas_pointer_t
-{
-    uint32_t lo;
-    uint32_t hi;
-} __attribute__ (( __aligned__( 8 ) ));
-
-#define _hi(p,v)    ((p).hi=(uint32_t)(v))
-#define _lo(p,v)    ((p).lo=(uint32_t)(v))
-#define _hi_eq(p,v) ((p).hi==(uint32_t)(v))
-#define _lo_eq(p,v) ((p).lo==(uint32_t)(v))
+#define _cas_field_t uint32_t
+#define _cas_aligned 8
 
 #elif defined(__x86_64__) && defined(__GNUC__)
 
-struct _cas_pointer_t
-{
-    uint64_t lo;
-    uint64_t hi;
-} __attribute__ (( __aligned__( 16 ) ));
-
-#define _hi(p,v)    ((p).hi=(uint64_t)(v))
-#define _lo(p,v)    ((p).lo=(uint64_t)(v))
-#define _hi_eq(p,v) ((p).hi==(uint64_t)(v))
-#define _lo_eq(p,v) ((p).lo==(uint64_t)(v))
+#define _cas_field_t uint64_t
+#define _cas_aligned 16
 
 #else
 #error "cas not implemented yet for your arch"
 #endif
 
+struct _cas_pointer_t
+{
+    _cas_field_t lo;
+    _cas_field_t hi;
+} __attribute__ (( __aligned__( _cas_aligned ) ));
+
 typedef struct _cas_pointer_t cas_pointer_t;
+
+#define _hi(p,v)    ((p).hi=(_cas_field_t)(v))
+#define _lo(p,v)    ((p).lo=(_cas_field_t)(v))
+#define _hi_eq(p,v) ((p).hi==(_cas_field_t)(v))
+#define _lo_eq(p,v) ((p).lo==(_cas_field_t)(v))
 
 inline int cas(volatile cas_pointer_t* mem, cas_pointer_t old_val, cas_pointer_t new_val)
 {
