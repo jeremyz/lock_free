@@ -1,7 +1,7 @@
 /*
  * File     : container_of.c
  * Author   : Jérémy Zurcher  <jeremy@asynk.ch>
- * Date     : 01/11/09
+ * Date     : 2009/11/01
  * License  :
  *
  *  Permission is hereby granted, free of charge, to any person obtaining
@@ -48,7 +48,7 @@ static void _check(int cond, const char *msg)
 {
    if(!cond)
      {
-        fprintf(stderr,"%s\n",msg);
+        fprintf(stderr,"%s failed\n",msg);
         exit(EXIT_FAILURE);
      }
 }
@@ -57,17 +57,17 @@ int main(int argc, char *argv[])
 {
    struct node n;
 
-   _check((&n==container_of( &n.data1, struct node, data1)),"1 container_of failed");
-   _check((&n==container_of( &n.data2, struct node, data2)),"2 container_of failed");
-   _check((&n==container_of( &n.data3, struct node, data3)),"3 container_of failed");
-   _check((&n==container_of( &n.data4, struct node, data4)),"4 container_of failed");
-   _check((&n==container_of( &n.data5, struct node, data5)),"5 container_of failed");
+   _check((&n==container_of( &n.data1, struct node, data1)),"1 container_of");
+   _check((&n==container_of( &n.data2, struct node, data2)),"2 container_of");
+   _check((&n==container_of( &n.data3, struct node, data3)),"3 container_of");
+   _check((&n==container_of( &n.data4, struct node, data4)),"4 container_of");
+   _check((&n==container_of( &n.data5, struct node, data5)),"5 container_of");
 
-   _check((&n==containerof( &n.data1, struct node, data1)),"1 container_of failed");
-   _check((&n==containerof( &n.data2, struct node, data2)),"2 container_of failed");
-   _check((&n==containerof( &n.data3, struct node, data3)),"3 container_of failed");
-   _check((&n==containerof( &n.data4, struct node, data4)),"4 container_of failed");
-   _check((&n==containerof( &n.data5, struct node, data5)),"5 container_of failed");
+   _check((&n==containerof( &n.data1, struct node, data1)),"1 containerof");
+   _check((&n==containerof( &n.data2, struct node, data2)),"2 containerof");
+   _check((&n==containerof( &n.data3, struct node, data3)),"3 containerof");
+   _check((&n==containerof( &n.data4, struct node, data4)),"4 containerof");
+   _check((&n==containerof( &n.data5, struct node, data5)),"5 containerof");
 
    printf("success\n");
 

@@ -1,7 +1,7 @@
 /*
  * File     : cas.c
  * Author   : Jérémy Zurcher  <jeremy@asynk.ch>
- * Date     : 01/11/09
+ * Date     : 2009/11/01
  * License  :
  *
  *  Permission is hereby granted, free of charge, to any person obtaining
@@ -74,6 +74,12 @@ int main( int argc, char*argv[], char*env[] )
    _check((ret==0),"3 return value is wrong");
    _check((_hi_eq(mem,&v5)),"3 hi value is wrong");
    _check((_lo_eq(mem,&v1)),"3 lo value is wrong");
+
+   _hi(old_val,&v1); _lo(old_val,&v2);
+   _hi(mem,&v4); _lo(mem,&v5);
+   mem = old_val;
+   _check((_hi_eq(mem,&v1)),"4 lo value is wrong");
+   _check((_lo_eq(mem,&v2)),"4 lo value is wrong");
 
    printf("success\n");
 

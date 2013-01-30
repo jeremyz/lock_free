@@ -1,7 +1,7 @@
 /*
  * File     : cas.h
  * Author   : Jérémy Zurcher  <jeremy@asynk.ch>
- * Date     : 25/01/13
+ * Date     : 2013/01/25
  * License  :
  *
  *  Permission is hereby granted, free of charge, to any person obtaining
@@ -50,8 +50,8 @@ extern "C" {
 
 struct _cas_pointer_t
 {
-    _cas_field_t lo;
-    _cas_field_t hi;
+   _cas_field_t lo;
+   _cas_field_t hi;
 } __attribute__ (( __aligned__( _cas_aligned ) ));
 
 typedef struct _cas_pointer_t cas_pointer_t;
@@ -63,39 +63,39 @@ typedef struct _cas_pointer_t cas_pointer_t;
 
 inline int cas(volatile cas_pointer_t* mem, cas_pointer_t old_val, cas_pointer_t new_val)
 {
-    char success;
+   char success;
 
 #if defined(__i386__) && defined(__GNUC__)
 
-    asm volatile("lock cmpxchg8b (%6);"
-            "setz %7;"
-            : "=a" ( old_val.lo ),
-              "=d" ( old_val.hi )
-            : "0"  ( old_val.lo ),
-              "1"  ( old_val.hi ),
-              "b"  ( new_val.lo ),
-              "c"  ( new_val.hi ),
-              "r"  ( mem ),
-              "m"  ( success )
-            : "cc", "memory"
-            );
+   asm volatile("lock cmpxchg8b (%6);"
+         "setz %7;"
+         : "=a" ( old_val.lo )
+         , "=d" ( old_val.hi )
+         : "0"  ( old_val.lo )
+         , "1"  ( old_val.hi )
+         , "b"  ( new_val.lo )
+         , "c"  ( new_val.hi )
+         , "r"  ( mem )
+         , "m"  ( success )
+         : "cc", "memory"
+         );
 
 #elif defined(__x86_64__) && defined(__GNUC__)
 
-    asm volatile (
-            "lock cmpxchg16b %1;"
-            "setz %0;"
-            : "=q" ( success )
-            , "+m" ( *mem )
-            , "+d" ( old_val.hi )
-            , "+a" ( old_val.lo )
-            : "c"  ( new_val.hi )
-            , "b"  ( new_val.lo )
-            : "cc", "memory"
-            );
+   asm volatile (
+         "lock cmpxchg16b %1;"
+         "setz %0;"
+         : "=q" ( success )
+         , "+m" ( *mem )
+         , "+d" ( old_val.hi )
+         , "+a" ( old_val.lo )
+         : "c"  ( new_val.hi )
+         , "b"  ( new_val.lo )
+         : "cc", "memory"
+         );
 #endif
 
-    return (int)success;
+   return (int)success;
 }
 
 # ifdef __cplusplus
