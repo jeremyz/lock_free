@@ -1,7 +1,7 @@
 /*
  * File     : lf_cas.h
  * Author   : Jérémy Zurcher  <jeremy@asynk.ch>
- * Date     : 01/11/09 
+ * Date     : 2009/11/01
  * License  :
  *
  *  Permission is hereby granted, free of charge, to any person obtaining
@@ -11,10 +11,10 @@
  *  distribute, sublicense, and/or sell copies of the Software, and to
  *  permit persons to whom the Software is furnished to do so, subject to
  *  the following conditions:
- *  
+ *
  *  The above copyright notice and this permission notice shall be
  *  included in all copies or substantial portions of the Software.
- *  
+ *
  *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -32,31 +32,70 @@
 extern "C" {
 # endif /* __cplusplus */
 
-struct lf_pointer;
+#include <stdint.h>
 
-typedef struct lf_pointer {
-    volatile struct lf_pointer *ptr;
-    volatile unsigned int count;
-} lf_pointer_t;
+#if defined(__i386__) && defined(__GNUC__)
 
-union ptr_u {
-    lf_pointer_t ptr;
-    volatile long long concat;
-};
+#define _cas_field_t uint32_t
+#define _cas_aligned 8
 
-#define lf_eql(ptra,ptrb) (((union ptr_u)(ptra)).concat == ((union ptr_u)(ptrb)).concat)
+#elif defined(__x86_64__) && defined(__GNUC__)
 
-/* CMPXCHG8B m64   Compare EDX:EAX with m64. If equal, set ZF and load ECX:EBX into m64. Else, clear ZF and load m64 into EDX:EAX. */
-static inline unsigned int cas( volatile lf_pointer_t *mem,
-                                volatile lf_pointer_t old,
-                                volatile lf_pointer_t new ) {
-    char result;
-    __asm__ __volatile__("lock; cmpxchg8b %0; setz %1;"
-            : "=m"(*mem), "=q"(result)
-            : "m"(*mem), "d" (old.count), "a" (old.ptr),
-            "c" (new.count), "b" (new.ptr)
-            : "memory");
-    return (int)result;
+#define _cas_field_t uint64_t
+#define _cas_aligned 16
+
+#else
+#error "cas not implemented yet for your arch"
+#endif
+
+struct _lf_pointer_t
+{
+   _cas_field_t pointer;
+   _cas_field_t counter;
+} __attribute__ (( __aligned__( _cas_aligned ) ));
+
+typedef struct _lf_pointer_t lf_pointer_t;
+
+#define lf_counter_set(p,v)   ((p).counter=(_cas_field_t)(v))
+#define lf_pointer_set(p,v)   ((p).pointer=(_cas_field_t)(v))
+#define lf_eq(p0,p1)          ((p0).pointer==(p1).pointer && (p0).counter==(p1).counter)
+#define lf_pointer_null(p)    ((p).pointer==(_cas_field_t)NULL)
+
+static inline int lf_cas(volatile lf_pointer_t* mem, lf_pointer_t old_val, lf_pointer_t new_val)
+{
+   char success;
+
+#if defined(__i386__) && defined(__GNUC__)
+
+   asm volatile("lock cmpxchg8b (%6);"
+         "setz %7;"
+         : "=a" ( old_val.pointer )
+         , "=d" ( old_val.counter )
+         : "0"  ( old_val.pointer )
+         , "1"  ( old_val.counter )
+         , "b"  ( new_val.pointer )
+         , "c"  ( new_val.counter )
+         , "r"  ( mem )
+         , "m"  ( success )
+         : "cc", "memory"
+         );
+
+#elif defined(__x86_64__) && defined(__GNUC__)
+
+   asm volatile (
+         "lock cmpxchg16b %1;"
+         "setz %0;"
+         : "=q" ( success )
+         , "+m" ( *mem )
+         , "+d" ( old_val.counter )
+         , "+a" ( old_val.pointer )
+         : "c"  ( new_val.counter )
+         , "b"  ( new_val.pointer )
+         : "cc", "memory"
+         );
+#endif
+
+   return (int)success;
 }
 
 # ifdef __cplusplus
